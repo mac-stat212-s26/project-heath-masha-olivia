@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Project Title",
     "section": "",
-    "text": "Your report goes here.\n\nCode# a test code chunk",
+    "text": "Your report goes here.\n\n\nCode\n# a test code chunk",
     "crumbs": [
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>Report</span>"
     ]
