@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Project Title",
     "section": "",
-    "text": "Your report goes here.\n\n\nCode\n# a test code chunk",
+    "text": "Your report goes here.\n\nCode# a test code chunk",
     "crumbs": [
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>Report</span>"
     ]
@@ -58,7 +58,7 @@
     "href": "appx/case-study.html",
     "title": "Appendix B — Case Study",
     "section": "",
-    "text": "Your case study go here.",
+    "text": "“The Differences in How CNN, MSNBC, and FOX Cover the News” (The Pudding, 2018) Summary This report by The Pudding does a good job at telling a data story; it avoids overwhelming the reader by breaking down the data and visualizations in annotated chunks. It unpacks the data in layers, building upon understanding of the previous visualization to inform the next one. The authors are trying to get the reader to understand how this kind of bias works through data; but to be convincing they have to take it one step at a time. The story starts by establishing the different networks, and how they could have different word usages (ex: stations say the names of their reporters the most often). These structured examples provide intuition on the visualization itself, and help the reader understand what the placement of the actual data points mean. The next step is to provide case studies within the visualization (ex: who talked the most about natural disasters). Once the reader has understood how different networks could provide biases, the story moves one step further; while stations may use the same words, it does not mean that they are telling the same story. The report then introduces contextual framing by analyzing words commonly paired with others (ex: all networks say “gun,” but Fox pairs it with “control,” CNN/MSNBC pair it with “violence”). Each ‘section’ of the report has an open ended interactive section for the reader, to test their understanding, and apply what they have just learned to topics not explicitly mentioned in the report. One possible limitation may be that the report relies heavily on interactive elements, while this makes it engaging, it may be harder to fully understand if the reader does not actively explore the visualizations.",
     "crumbs": [
       "Appendices",
       "<span class='chapter-number'>B</span>  <span class='chapter-title'>Case Study</span>"
