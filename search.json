@@ -4,7 +4,7 @@
     "href": "index.html",
     "title": "Project Title",
     "section": "",
-    "text": "Your report goes here.\n\n\nCode\n# a test code chunk",
+    "text": "Your report goes here.\n\nCode# a test code chunk",
     "crumbs": [
       "<span class='chapter-number'>1</span>  <span class='chapter-title'>Report</span>"
     ]
@@ -12,12 +12,45 @@
   {
     "objectID": "eda/eda-member1.html",
     "href": "eda/eda-member1.html",
-    "title": "Member 1 First Name & Last Name Initial",
+    "title": "Olivia S",
     "section": "",
-    "text": "Your exploratory data analysis of the team datasets go here.",
+    "text": "Data Cleaning\nThis report explores 2024 health insurance coverage data from the ACS across the US KFF State Health Facts. The dataset contains the share of the total population covered by each insurance type: Employer, Non-Group, Medicaid, Medicare, Military, and Uninsured.\nCoderaw_coverage &lt;- read_csv(\"../data/raw/Heathcare_Coverage_US.csv\")\n\ndf &lt;- raw_coverage %&gt;%\n  select(-Total) %&gt;%\n  filter(!is.na(Location), !str_starts(Location, \"Notes\")) %&gt;%\n  drop_na(Employer) %&gt;%\n  rename_with(~ c(\"location\", \"employer\", \"non_group\", \"medicaid\",\n                  \"medicare\", \"military\", \"uninsured\"), everything())\n\n# Separate national from state-level (territories)\nnational &lt;- df |&gt; filter(location == \"United States\")\nstates   &lt;- df |&gt; filter(location != \"United States\")\nCodeglimpse(states)\n\nRows: 52\nColumns: 7\n$ location  &lt;chr&gt; \"Alabama\", \"Alaska\", \"Arizona\", \"Arkansas\", \"California\", \"C…\n$ employer  &lt;dbl&gt; 0.470, 0.462, 0.467, 0.422, 0.470, 0.518, 0.517, 0.485, 0.55…\n$ non_group &lt;dbl&gt; 0.068, 0.047, 0.058, 0.060, 0.064, 0.077, 0.049, 0.050, 0.04…\n$ medicaid  &lt;dbl&gt; 0.199, 0.225, 0.190, 0.250, 0.278, 0.164, 0.221, 0.188, 0.26…\n$ medicare  &lt;dbl&gt; 0.161, 0.118, 0.170, 0.163, 0.121, 0.140, 0.149, 0.190, 0.08…\n$ military  &lt;dbl&gt; 0.020, 0.038, 0.013, 0.012, 0.008, 0.021, 0.006, 0.018, 0.01…\n$ uninsured &lt;dbl&gt; 0.082, 0.111, 0.102, 0.093, 0.059, 0.078, 0.057, 0.069, 0.04…",
     "crumbs": [
       "EDA",
-      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Member 1 First Name & Last Name Initial</span>"
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Olivia S</span>"
+    ]
+  },
+  {
+    "objectID": "eda/eda-member1.html#summary-statistics",
+    "href": "eda/eda-member1.html#summary-statistics",
+    "title": "Olivia S",
+    "section": "Summary Statistics",
+    "text": "Summary Statistics\n\nCodestats_tbl &lt;- states %&gt;%\n  select(-location) %&gt;%\n  pivot_longer(everything(), names_to = \"coverage_type\", values_to = \"value\") %&gt;%\n  group_by(coverage_type) %&gt;%\n  summarise(Mean   = mean(value),\n    Median = median(value),\n    SD     = sd(value),\n    Min    = min(value),\n    Max    = max(value),\n    .groups = \"drop\") %&gt;% \n  mutate(coverage_type = str_to_title(str_replace_all(coverage_type, \"_\", \" \")),\n    across(where(is.numeric), ~ percent(.x, accuracy = 0.1))) %&gt;%\n  arrange(desc(Mean)) %&gt;%\n  rename(\"Coverage Type\" = coverage_type)\n\nknitr::kable(stats_tbl, align = \"lrrrrr\",\n             caption = \"Summary statistics by coverage type (states & territories)\")\n\n\nSummary statistics by coverage type (states & territories)\n\nCoverage Type\nMean\nMedian\nSD\nMin\nMax\n\n\n\nUninsured\n7.5%\n7.2%\n2.6%\n2.8%\n16.8%\n\n\nNon Group\n6.3%\n5.8%\n1.8%\n3.0%\n12.5%\n\n\nEmployer\n48.7%\n49.4%\n5.8%\n23.0%\n59.4%\n\n\nMedicaid\n20.3%\n19.2%\n6.1%\n10.2%\n47.0%\n\n\nMedicare\n15.6%\n15.7%\n2.2%\n8.2%\n19.5%\n\n\nMilitary\n1.5%\n1.4%\n0.9%\n0.4%\n4.3%\n\n\n\n\n\nKey observations:\n\n\nEmployer coverage is by far the largest category, averaging 48.7% across states.\n\nUninsured rates have the widest spread (SD = 2.6%), reflecting large policy differences across states.\n\nMilitary coverage is the smallest category on average at 1.5%.",
+    "crumbs": [
+      "EDA",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Olivia S</span>"
+    ]
+  },
+  {
+    "objectID": "eda/eda-member1.html#visualisations",
+    "href": "eda/eda-member1.html#visualisations",
+    "title": "Olivia S",
+    "section": "Visualisations",
+    "text": "Visualisations\nDistribution of Coverage Rates by Type\n\nCodestates %&gt;%\n  pivot_longer(-location, names_to = \"type\", values_to = \"pct\") %&gt;%\n  mutate(type = str_to_title(str_replace_all(type, \"_\", \" \"))) %&gt;%\n  ggplot(aes(x = pct, fill = type)) +\n  geom_histogram(bins = 15, color = \"white\", linewidth = 0.3) +\n  facet_wrap(~ type, scales = \"free\", ncol = 3) +\n  scale_x_continuous(labels = percent_format(accuracy = 1)) +\n  scale_fill_brewer(palette = \"Set2\") +\n  labs(title    = \"Distribution of Coverage Rates by Type\",\n    subtitle = \"Histogram of state/territory proportions for each coverage category\",\n    x = \"Share of Population\", y = \"Count\") +\n  theme(legend.position = \"none\")\n\n\n\n\n\n\n\nTop States: Uninsured vs. Employer Coverage\n\nCodemake_ranked_plot &lt;- function(col, n = 10, title, fill_col) {\n  states |&gt;\n    select(location, value = {{ col }}) |&gt;\n    slice_max(value, n = n) |&gt;\n    mutate(location = fct_reorder(location, value)) |&gt;\n    ggplot(aes(x = value, y = location)) +\n    geom_col(fill = fill_col, alpha = 0.85) +\n    geom_text(aes(label = percent(value, accuracy = 0.1)),\n              hjust = -0.1, size = 3.2) +\n    scale_x_continuous(labels = percent_format(accuracy = 1),\n                       expand = expansion(mult = c(0, 0.15))) +\n    labs(title = title, x = NULL, y = NULL)\n}\n\np3a &lt;- make_ranked_plot(uninsured, 10, \"Top 10: Highest Uninsured Rate\",   \"#E74C3C\")\np3b &lt;- make_ranked_plot(employer,  10, \"Top 10: Highest Employer Coverage\", \"#2980B9\")\n\np3a | p3b\n\n\n\nTop 10 states ranked by uninsured rate (left) and employer coverage (right)\n\n\n\nCorrelation Between Coverage Types\n\nCodecor_mat &lt;- states %&gt;%\n  select(-location) %&gt;%\n  cor() %&gt;%\n  as.data.frame() %&gt;%\n  rownames_to_column(\"var1\") %&gt;%\n  pivot_longer(-var1, names_to = \"var2\", values_to = \"corr\") %&gt;%\n  mutate(\n    var1 = str_to_title(str_replace_all(var1, \"_\", \" \")),\n    var2 = str_to_title(str_replace_all(var2, \"_\", \" \"))\n  )\n\nggplot(cor_mat, aes(x = var1, y = var2, fill = corr)) +\n  geom_tile(color = \"white\", linewidth = 0.5) +\n  geom_text(aes(label = round(corr, 2)), size = 3.5) +\n  scale_fill_gradient2(low = \"#E74C3C\", mid = \"white\", high = \"#2980B9\",\n                       midpoint = 0, limits = c(-1, 1),\n                       name = \"Pearson r\") +\n  labs(\n    title    = \"Correlation Matrix: Coverage Types\",\n    subtitle = \"Computed across all states and territories\",\n    x = NULL, y = NULL\n  ) +\n  theme(axis.text.x = element_text(angle = 30, hjust = 1))\n\n\n\n\n\n\n\nNotable correlations:\n\n\nEmployer ↔︎ Medicaid: strong negative (-0.75) — states with higher employer coverage tend to have lower Medicaid enrollment.\n\nMedicaid ↔︎ Uninsured: negative (-0.21) — expanded Medicaid is associated with fewer uninsured residents.\n\nMedicaid vs. Uninsured Rate (Scatter)\n\nCodestates %&gt;%\n  ggplot(aes(x = medicaid, y = uninsured, label = location)) +\n  geom_point(aes(color = employer), size = 3, alpha = 0.85) +\n  geom_smooth(method = \"lm\", se = TRUE, color = \"grey30\",\n              linetype = \"dashed\", linewidth = 0.7) +\n  geom_text_repel(size = 2.6, max.overlaps = 20, color = \"grey30\") +\n  scale_color_gradient(low = \"#2ECC71\", high = \"#1A5276\",\n                       labels = percent_format(accuracy = 1),\n                       name   = \"Employer\\nCoverage\") +\n  scale_x_continuous(labels = percent_format(accuracy = 1)) +\n  scale_y_continuous(labels = percent_format(accuracy = 1)) +\n  labs(\n    title    = \"Medicaid Enrollment vs. Uninsured Rate by State\",\n    subtitle = \"Color = employer coverage share; dashed line = linear trend\",\n    x = \"Medicaid Share\", y = \"Uninsured Rate\"\n  )",
+    "crumbs": [
+      "EDA",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Olivia S</span>"
+    ]
+  },
+  {
+    "objectID": "eda/eda-member1.html#findings",
+    "href": "eda/eda-member1.html#findings",
+    "title": "Olivia S",
+    "section": "Findings",
+    "text": "Findings\n\n\nMetric\nStates\n\n\n\nHighest uninsured rates\nTexas, Georgia, Oklahoma\n\n\nLowest uninsured rates\nMassachusetts, Hawaii, Vermont\n\n\nHighest Medicaid share\nPuerto Rico, New Mexico, Louisiana\n\n\nHighest employer share\nUtah, New Hampshire, District of Columbia\n\n\n\n\nNationally, 48.6% of the population relies on employer-sponsored insurance.\n\n8.2% of the population remains uninsured, with wide state variation.\nMedicaid expansion is the single strongest predictor of lower uninsured rates across states.",
+    "crumbs": [
+      "EDA",
+      "<span class='chapter-number'>2</span>  <span class='chapter-title'>Olivia S</span>"
     ]
   },
   {
