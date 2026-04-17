@@ -2,8 +2,6 @@
 title: "Olivia S"
 ---
 
-This report explores 2024 health insurance coverage data from the ACS across the US [KFF State Health Facts](https://www.kff.org/statedata/). The dataset contains the share of the total population covered by each insurance type: Employer, Non-Group, Medicaid, Medicare, Military, and Uninsured.
-
 
 ```{r}
 library(ggplot2)
@@ -16,6 +14,7 @@ library(scales)
 library(ggrepel)
 library(patchwork)
 library(tibble)
+library(janitor)
 
 theme_set(
   theme_minimal(base_size = 12) +
@@ -73,15 +72,15 @@ knitr::kable(stats_tbl, align = "lrrrrr",
 
 **Key observations:**
 
-- **Employer coverage** is by far the largest category, averaging `r percent(mean(states$employer), accuracy=0.1)` across states.
-- **Uninsured rates** have the widest spread (SD = `r percent(sd(states$uninsured), accuracy=0.1)`), reflecting large policy differences across states.
-- **Military coverage** is the smallest category on average at `r percent(mean(states$military), accuracy=0.1)`.
+- Employer coverage is by far the largest category, averaging `r percent(mean(states$employer), accuracy=0.1)` across states.
+- Uninsured rates have the widest spread (SD = `r percent(sd(states$uninsured), accuracy=0.1)`), reflecting large policy differences across states.
+- Military coverage is the smallest category on average at `r percent(mean(states$military), accuracy=0.1)`.
 
 ---
 
 ## Visualisations
 
-### Distribution of Coverage Rates by Type
+### Coverage Rates by Type
 
 ```{r}
 #| fig-height: 7
@@ -161,12 +160,12 @@ ggplot(cor_mat, aes(x = var1, y = var2, fill = corr)) +
 
 Notable correlations:
 
-- **Employer ↔ Medicaid**: strong negative (`r round(cor(states$employer, states$medicaid), 2)`) — states with higher employer coverage tend to have lower Medicaid enrollment.
-- **Medicaid ↔ Uninsured**: negative (`r round(cor(states$medicaid, states$uninsured), 2)`) — expanded Medicaid is associated with fewer uninsured residents.
+- Employer ↔ Medicaid: strong negative (`r round(cor(states$employer, states$medicaid), 2)`) — states with higher employer coverage tend to have lower Medicaid enrollment.
+- Medicaid ↔ Uninsured: negative (`r round(cor(states$medicaid, states$uninsured), 2)`) — expanded Medicaid is associated with fewer uninsured residents.
 
 ---
 
-### Medicaid vs. Uninsured Rate (Scatter)
+### Medicaid vs. Uninsured Rate
 
 ```{r}
 #| fig-height: 6.5
@@ -177,7 +176,7 @@ states %>%
   geom_smooth(method = "lm", se = TRUE, color = "grey30",
               linetype = "dashed", linewidth = 0.7) +
   geom_text_repel(size = 2.6, max.overlaps = 20, color = "grey30") +
-  scale_color_gradient(low = "#2ECC71", high = "#1A5276",
+  scale_color_gradient(low = "yellow", high = "red",
                        labels = percent_format(accuracy = 1),
                        name   = "Employer\nCoverage") +
   scale_x_continuous(labels = percent_format(accuracy = 1)) +
