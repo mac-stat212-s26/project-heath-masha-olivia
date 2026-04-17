@@ -1,5 +1,59 @@
 ---
-title: "Member 2 First Name & Last Name Initial"
+title: "Masha A"
 ---
 
 Your exploratory data analysis of the team datasets go here.
+
+## Uninsured Rates for Adults Ages 19-64 by Sex
+
+```{r}
+library(tidyverse)
+library(janitor)
+library(gtsummary)
+library(visdat)
+
+uninsured_data <- read_csv("../data/raw/uninsured_sex_2024.csv", skip = 2) |> 
+  clean_names()
+```
+
+
+## Is there a gender gap in uninsurance rates?
+
+```{r}
+uninsured_long <- uninsured_data |>
+  filter(location != "United States") |> 
+  pivot_longer(cols = c(male, female), names_to = "sex", values_to = "rate")
+
+ggplot(uninsured_long, aes(x = rate, fill = sex)) +
+  geom_density(alpha = 0.5) +
+  labs(title = "Distribution of Uninsured Rates by Sex Across States",
+       x = "Uninsured Rate (%)",
+       y = "Density") +
+  theme_minimal()
+```
+
+
+
+## Geographic Variation
+
+```{r}
+uninsured_data |>
+  filter(location != "United States") |>
+  mutate(gap = male - female) |>
+  slice_max(gap, n = 10) |>
+  ggplot(aes(x = reorder(location, gap), y = gap)) +
+  geom_col(fill = "steelblue") +
+  coord_flip() +
+  labs(title = "Top 10 States with Largest Gender Gap",
+       subtitle = "States where men are significantly more likely to be uninsured than women",
+       x = "State",
+       y = "Difference (Male % - Female %)") +
+  theme_minimal()
+```
+
+
+## Initial EDA Observations
+
+Gender Disparity - Initial density plots suggest that males generally have a higher uninsurance rate than females in the 19-64 age bracket. This may be linked to female eligibility for programs like Medicaid during pregnancy or different employment patterns
+
+State Volatility - There is a range in rates. States that did not expand Medicaid likely show higher total uninsured percentages for both sexes compared to expansion states
