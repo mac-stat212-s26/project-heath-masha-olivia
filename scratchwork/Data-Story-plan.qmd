@@ -1,0 +1,14 @@
+---
+title: "Data-Story-plan"
+format: html
+---
+
+Data Story:
+
+Start with a visualization breaking down the general healthcare coverage across states (type etc)
+
+"Zoom In" on uninsured rates in the country (maybe by demographic?)
+**a finding to include here is that medicaid is the strongest predictor of lower uninsured rates across states
+
+Final Viz of how medicaid cuts will/has affected insurance coverage for people (and uninsurance)
+
