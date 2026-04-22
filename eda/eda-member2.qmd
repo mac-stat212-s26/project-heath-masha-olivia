@@ -13,42 +13,71 @@ library(gtsummary)
 library(visdat)
 
 uninsured_data <- read_csv("../data/raw/uninsured_sex_2024.csv", skip = 2) |> 
-  clean_names()
+  clean_names()|>
+  filter(!is.na(male),
+         !location %in% c("Notes", "Sources", "Definitions", "Footnotes"),
+         location != "United States")
+```
+
+## Plot 1: Overall distribution of uninsured rates (total) 
+
+```{r}
+ggplot(uninsured_data, aes(x = total)) +
+  geom_histogram(binwidth = 0.01, fill = "steelblue", color = "white") +
+  scale_x_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Overall Distribution of Uninsured Rates Across States",
+    subtitle = "Adults ages 19–64 | Source: KFF/ACS 2024",
+    x = "Uninsured Rate",
+    y = "Number of States"
+  ) +
+  theme_minimal()
 ```
 
 
-## Is there a gender gap in uninsurance rates?
+## Plot 2: Distribution by sex
 
 ```{r}
 uninsured_long <- uninsured_data |>
-  filter(location != "United States") |> 
   pivot_longer(cols = c(male, female), names_to = "sex", values_to = "rate")
 
 ggplot(uninsured_long, aes(x = rate, fill = sex)) +
   geom_density(alpha = 0.5) +
-  labs(title = "Distribution of Uninsured Rates by Sex Across States",
-       x = "Uninsured Rate (%)",
-       y = "Density") +
+  scale_x_continuous(labels = scales::percent_format()) +
+  scale_fill_manual(values = c("male" = "#2166ac", "female" = "#d6604d"),
+                    labels = c("Male", "Female")) +
+  labs(
+    title = "Distribution of Uninsured Rates by Sex Across States",
+    x = "Uninsured Rate",
+    y = "Density",
+    fill = "Sex"
+  ) +
   theme_minimal()
 ```
 
 
 
-## Geographic Variation
+## Plot 3: Gender gap for ALL states
 
 ```{r}
 uninsured_data |>
-  filter(location != "United States") |>
-  mutate(gap = male - female) |>
-  slice_max(gap, n = 10) |>
-  ggplot(aes(x = reorder(location, gap), y = gap)) +
-  geom_col(fill = "steelblue") +
-  coord_flip() +
-  labs(title = "Top 10 States with Largest Gender Gap",
-       subtitle = "States where men are significantly more likely to be uninsured than women",
-       x = "State",
-       y = "Difference (Male % - Female %)") +
-  theme_minimal()
+  mutate(location = fct_reorder(location, total)) |>
+  ggplot() +
+  geom_segment(aes(x = female, xend = male,
+                   y = location, yend = location),
+               color = "grey70", linewidth = 0.8) +
+  geom_point(aes(x = male, y = location), color = "#2166ac", size = 2) +
+  geom_point(aes(x = female, y = location), color = "#d6604d", size = 2) +
+  scale_x_continuous(labels = scales::percent_format()) +
+  labs(
+    title = "Uninsured Rates by Sex for All States",
+    subtitle = "Blue = Male  |  Red = Female  |  Ordered by total uninsured rate",
+    x = "Uninsured Rate (Ages 19–64)",
+    y = NULL,
+    caption = "Source: KFF/ACS 2024"
+  ) +
+  theme_minimal() +
+  theme(axis.text.y = element_text(size = 7))
 ```
 
 
