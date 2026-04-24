@@ -13,3 +13,33 @@ Start with a visualization breaking down the general healthcare coverage across 
 
 Final Viz of how medicaid cuts will/has affected insurance coverage for people (and uninsurance)
 
+
+## Deliverables: 
+
+- README.md file that answers the following questions:
+
+What is this GitHub repository all about?
+What software (with the version numbers) need to be installed to run the code contained in this GitHub repository, eg, R version 4.4.3+ and RStudio 2024.12.1 Build 563?
+What steps need to be taken to run the code contained in this GitHub repository? Think about the steps you did at the beginning of the semester to prepare your machine for class.
+What does the expected output look like? You can use one or more screenshots of the main features.
+TipExamples of Well-Strcutured README files
+The README.md file is the landing page for your GitHub repository which must be inviting and informative. The README.md file is a dynamic document that you need to keep up-to-date. See the GitHub basic writing and formatting syntax page for tips on how to format your README file. For inspirational README.md examples and a list of useful resources, see the awesome README GitHub page–Aimeos TYPO3 extension project and SegwayJump-Game are good examples.
+
+
+- Data Story Report: in the file named index.qmd. Make sure to:
+Hide the code chunks
+Hide the warning and error messages
+Avoid printing any unnecessary output
+Format printed tables, if any, nicely. There are many packages such as gt and kableExtra that can help achieve this.
+See the Structure section for details about what to include in the data story report.
+
+- Presentation Video
+After soliciting feedback from peers, teams are expected to adjust their data story report accordingly and then record a video presentation (5-10 minutes if possible) explaining the main finding in their data story and pointing the interested viewers to the full report if more information is needed. The presentation video should be uploaded to the project GitHub repository (if possible) or a video streaming service such as YouTube or Loom then embedded in the report.
+
+- Presentation Slides
+The presentation slides used in the presentation video (or an altered version) should be embedded in the report, preferably after uploading it to the project GitHub repository.
+
+
+
+
+

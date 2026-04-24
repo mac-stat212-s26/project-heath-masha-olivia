@@ -4,10 +4,35 @@ format: html
 ---
 
 ```{r}
-#this chunk creates the inital bar chart
+#setup
 library(ggplot2)
 library(dplyr)
 library(tidyr)
+library(readr)
+library(stringr)
+library(forcats)
+library(scales)
+library(ggrepel)
+library(patchwork)
+library(tibble)
+library(janitor)
+library(plotly)
+
+theme_set(
+  theme_minimal(base_size = 12) +
+    theme(
+      plot.title    = element_text(face = "bold", size = 14),
+      plot.subtitle = element_text(color = "grey40"),
+      axis.title    = element_text(size = 10),
+      legend.position = "bottom"
+    )
+)
+```
+
+
+
+```{r}
+#this chunk creates the inital bar chart
 
 num_insurance <- read.csv("../data/raw/num_insurance.csv")
 
@@ -54,30 +79,6 @@ ggplot(us_long, aes(x = "United States", y = People, fill = Coverage)) +
 
 ```
 
-```{r}
-library(ggplot2)
-library(dplyr)
-library(tidyr)
-library(readr)
-library(stringr)
-library(forcats)
-library(scales)
-library(ggrepel)
-library(patchwork)
-library(tibble)
-library(janitor)
-
-theme_set(
-  theme_minimal(base_size = 12) +
-    theme(
-      plot.title    = element_text(face = "bold", size = 14),
-      plot.subtitle = element_text(color = "grey40"),
-      axis.title    = element_text(size = 10),
-      legend.position = "bottom"
-    )
-)
-```
-
 ## Data Cleaning
 
 ```{r}
@@ -99,6 +100,7 @@ states   <- df |> filter(location != "United States")
 
 ```{r}
 #| fig-height: 7
+# initial correlation matrix
 
 library(tidyverse)
 
@@ -144,8 +146,7 @@ ggplot(cor_mat, aes(var1, var2, fill = corr)) +
 
 
 ```{r}
-library(plotly)
-library(tidyverse)
+#interactive correlation matrix
 
 cor_mat <- cor_mat %>%
   mutate(
