@@ -186,11 +186,395 @@ p <- ggplot(cor_mat, aes(x = var1, y = var2, fill = corr, text = tooltip)) +
     y = NULL
   ) +
   
-  theme_minimal() +
+  theme_classic() +
   theme(
     axis.text.x = element_text(angle = 30, hjust = 1)
   )
 
 ggplotly(p, tooltip = "text")
 ```
+
+# Final Viz: Effects of Medicaid Cuts
+
+viz of medicaid participation 
+projection of participation (pre covid years) this would be like a linear regression predicting participation
+
+effects of the cuts (how many people lost coverage)
+
+contrapositive plot: how many people would have coverage without the cuts versus how many people have lost coverage 
+
+Maybe a final map of which states are the most effected (income?)
+
+## The Impact of Medicaid Cuts
+
+Medicaid is the single largest source of health coverage for low-income Americans. Recent federal and state-level cuts have reversed years of enrollment growth, threatening to push millions back into the ranks of the uninsured. The following charts trace participation trends, model what enrollment *should* look like absent policy rollbacks, and map which states are bearing the heaviest burden.
+
+---
+
+### Medicaid Participation Over Time
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+medicaid_wide <- read_csv("../data/raw/Medicaid participation.csv")
+
+# Pivot to long format
+medicaid_long <- medicaid_wide %>%
+  pivot_longer(-Location, names_to = "year_col", values_to = "rate") %>%
+  mutate(year = as.integer(sub("__Medicaid", "", year_col))) %>%
+  select(-year_col)
+
+# National trend
+us_trend <- medicaid_long %>% filter(Location == "United States")
+
+ggplot(us_trend, aes(x = year, y = rate)) +
+  geom_line(color = "#2980B9", linewidth = 1.2) +
+  geom_point(color = "#2980B9", size = 3) +
+  annotate("rect", xmin = 2020.5, xmax = 2023.5,
+           ymin = -Inf, ymax = Inf,
+           fill = "#F39C12", alpha = 0.12) +
+  annotate("text", x = 2022, y = 0.197,
+           label = "COVID-era\nenrollment surge",
+           color = "#B7770D", size = 3, fontface = "italic") +
+  annotate("segment", x = 2023.2, xend = 2024,
+           y = 0.213, yend = 0.207,
+           arrow = arrow(length = unit(0.2, "cm")),
+           color = "#E74C3C", linewidth = 0.8) +
+  annotate("text", x = 2022.5, y = 0.216,
+           label = "Cuts begin", color = "#E74C3C", size = 3.2) +
+  scale_y_continuous(labels = percent_format(accuracy = 1),
+                     limits = c(0.12, 0.23)) +
+  scale_x_continuous(breaks = c(2008, 2010, 2012, 2014, 2016,
+                                  2018, 2019, 2021, 2022, 2023, 2024)) +
+  labs(
+    title = "U.S. Medicaid Participation Rate, 2008–2024",
+    subtitle = "Share of population enrolled in Medicaid",
+    x = NULL, y = "Participation Rate"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+Medicaid enrollment grew steadily from 2008 through the ACA expansion in 2014, plateaued in the late 2010s, and then surged during the COVID-19 pandemic when continuous-enrollment protections prevented states from removing people from the rolls. Starting in 2024, cuts and renewed eligibility redeterminations reversed that trend — bringing the national rate down from a peak of 21.2% to 20.4% in a single year.
+
+---
+
+### Pre-COVID Projection: What Participation Would Look Like Without Cuts
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(tidyr)
+library(readr)
+library(scales)
+
+us_trend <- medicaid_long %>% filter(Location == "United States")
+
+# Fit linear regression on pre-COVID years (2013–2019) to project trend
+pre_covid <- us_trend %>% filter(year >= 2013, year <= 2019)
+lm_model  <- lm(rate ~ year, data = pre_covid)
+
+projection_years <- data.frame(year = 2019:2024)
+projection_years$projected <- predict(lm_model, newdata = projection_years)
+
+# Observed vs projected
+obs_post <- us_trend %>% filter(year >= 2019)
+
+ggplot() +
+  # Observed historical line (all years)
+  geom_line(data = us_trend %>% filter(year <= 2019),
+            aes(x = year, y = rate, color = "Observed"),
+            linewidth = 1.2) +
+  geom_line(data = obs_post,
+            aes(x = year, y = rate, color = "Observed"),
+            linewidth = 1.2) +
+  # Projected trend (dashed)
+  geom_line(data = projection_years,
+            aes(x = year, y = projected, color = "Pre-COVID trend (projected)"),
+            linewidth = 1.1, linetype = "dashed") +
+  # Shade gap between projected and observed (2021-2024)
+  geom_ribbon(
+    data = inner_join(
+      obs_post %>% filter(year >= 2021),
+      projection_years %>% filter(year >= 2021),
+      by = "year"
+    ),
+    aes(x = year, ymin = rate, ymax = projected),
+    fill = "#E74C3C", alpha = 0.15
+  ) +
+  scale_color_manual(
+    values = c("Observed" = "#2980B9",
+               "Pre-COVID trend (projected)" = "#27AE60"),
+    name = NULL
+  ) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_x_continuous(breaks = c(2008, 2010, 2012, 2014, 2016,
+                                  2018, 2019, 2021, 2022, 2023, 2024)) +
+  labs(
+    title = "Medicaid Participation: Observed vs. Pre-COVID Projected Trend",
+    subtitle = "Projection based on linear regression of 2013–2019 enrollment growth",
+    x = NULL, y = "Participation Rate",
+    caption = "Shaded area: gap between where participation would have been\nvs. where it actually landed after cuts began."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40"),
+    legend.position = "bottom",
+    panel.grid.minor = element_blank()
+  )
+```
+
+A linear regression fitted to the 2013–2019 pre-pandemic period projects where Medicaid participation would likely have trended absent COVID disruptions and subsequent cuts. By 2024, the model predicts a participation rate of roughly **20.9%** — about **0.5 percentage points** above the observed 20.4%. While this gap may sound modest, applied to a population of 335 million it represents millions of people who lost coverage or were not picked up by the program.
+
+---
+
+### How Many People Lost Coverage?
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(scales)
+library(tidyr)
+
+# U.S. Census population estimates (millions) by year
+pop_millions <- tibble(
+  year = c(2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015,
+           2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024),
+  pop  = c(304.1, 306.8, 309.3, 311.7, 314.0, 316.2, 318.6, 320.9,
+           323.1, 325.1, 326.7, 328.2, 332.0, 334.2, 335.9, 337.3)
+)
+
+us_trend <- medicaid_long %>%
+  filter(Location == "United States") %>%
+  left_join(pop_millions, by = "year") %>%
+  mutate(enrolled_millions = rate * pop)
+
+# Linear model on 2013-2019
+pre_covid <- us_trend %>% filter(year >= 2013, year <= 2019)
+lm_model  <- lm(rate ~ year, data = pre_covid)
+proj_df   <- tibble(year = 2019:2024)
+proj_df$proj_rate <- predict(lm_model, newdata = proj_df)
+proj_df   <- proj_df %>%
+  left_join(pop_millions, by = "year") %>%
+  mutate(proj_enrolled = proj_rate * pop)
+
+# Compute people "lost" = projected - observed, post-2021 only
+impact <- us_trend %>%
+  filter(year >= 2021) %>%
+  left_join(proj_df %>% select(year, proj_enrolled), by = "year") %>%
+  mutate(gap_millions = proj_enrolled - enrolled_millions)
+
+ggplot(impact, aes(x = year, y = gap_millions)) +
+  geom_col(fill = "#E74C3C", alpha = 0.85, width = 0.6) +
+  geom_text(aes(label = paste0("+", round(gap_millions, 1), "M")),
+            vjust = -0.5, fontface = "bold", size = 3.8,
+            color = "#C0392B") +
+  scale_x_continuous(breaks = c(2021, 2022, 2023, 2024)) +
+  scale_y_continuous(labels = label_number(suffix = "M"),
+                     limits = c(0, max(impact$gap_millions) * 1.3)) +
+  labs(
+    title = "Estimated People Below Projected Medicaid Enrollment",
+    subtitle = "Difference between pre-COVID trend projection and actual enrollment",
+    x = NULL, y = "People (millions)",
+    caption = "Positive values indicate fewer enrollees than the pre-COVID trajectory predicted."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  )
+```
+
+Combining participation rates with U.S. Census population estimates shows that the gap between projected and actual Medicaid enrollment has grown each year since the cuts began. By 2024, roughly **1–2 million fewer people** are on Medicaid than the pre-pandemic trend would have predicted, with the shortfall widening from earlier years when enrollment was still protected by COVID-era policies.
+
+---
+
+### Coverage Lost vs. Coverage Retained
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(scales)
+library(tidyr)
+
+pop_millions <- tibble(
+  year = c(2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015,
+           2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024),
+  pop  = c(304.1, 306.8, 309.3, 311.7, 314.0, 316.2, 318.6, 320.9,
+           323.1, 325.1, 326.7, 328.2, 332.0, 334.2, 335.9, 337.3)
+)
+
+us_trend <- medicaid_long %>%
+  filter(Location == "United States") %>%
+  left_join(pop_millions, by = "year") %>%
+  mutate(enrolled_millions = rate * pop)
+
+pre_covid <- us_trend %>% filter(year >= 2013, year <= 2019)
+lm_model  <- lm(rate ~ year, data = pre_covid)
+proj_df   <- tibble(year = 2019:2024) %>%
+  mutate(proj_rate = predict(lm_model, newdata = tibble(year = year))) %>%
+  left_join(pop_millions, by = "year") %>%
+  mutate(proj_enrolled = proj_rate * pop)
+
+contrapositive <- us_trend %>%
+  filter(year == 2024) %>%
+  left_join(proj_df %>% select(year, proj_enrolled), by = "year") %>%
+  transmute(
+    `Actually Enrolled`       = enrolled_millions,
+    `Projected Without Cuts`  = proj_enrolled
+  ) %>%
+  pivot_longer(everything(), names_to = "scenario", values_to = "millions")
+
+contrapositive <- contrapositive %>%
+  mutate(
+    lost    = ifelse(scenario == "Projected Without Cuts",
+                     contrapositive$millions[2] - contrapositive$millions[1],
+                     0),
+    base    = ifelse(scenario == "Projected Without Cuts",
+                     contrapositive$millions[1],
+                     millions),
+    scenario = factor(scenario, levels = c("Actually Enrolled",
+                                            "Projected Without Cuts"))
+  )
+
+# Stacked bar comparing 2024 actual vs projected
+ggplot() +
+  # Base (actual enrolled, shared by both)
+  geom_col(
+    data = contrapositive,
+    aes(x = scenario, y = base, fill = "People With Coverage"),
+    width = 0.5
+  ) +
+  # Extra bar for the "lost" portion on the projected scenario
+  geom_col(
+    data = contrapositive %>% filter(scenario == "Projected Without Cuts"),
+    aes(x = scenario, y = lost, fill = "People Who Lost Coverage"),
+    width = 0.5,
+    position = position_stack()
+  ) +
+  geom_text(
+    data = contrapositive,
+    aes(x = scenario, y = millions + 1,
+        label = paste0(round(millions, 1), "M")),
+    fontface = "bold", size = 4.5
+  ) +
+  scale_fill_manual(
+    values = c("People With Coverage"    = "#2980B9",
+               "People Who Lost Coverage" = "#E74C3C"),
+    name = NULL
+  ) +
+  scale_y_continuous(labels = label_number(suffix = "M")) +
+  labs(
+    title = "2024 Medicaid: Who Has Coverage vs. Who Was Cut",
+    subtitle = "Actual enrollment compared to the pre-COVID trajectory counterfactual",
+    x = NULL, y = "People (millions)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40"),
+    legend.position = "bottom",
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  )
+```
+
+The side-by-side comparison makes the counterfactual concrete: the blue portion represents the **~68.8 million people** currently enrolled in Medicaid. The red portion on the right bar shows how many additional people *would* be covered under the pre-COVID growth trajectory — roughly **1.5–2 million more** — highlighting the direct human cost of the cuts.
+
+---
+
+### State-Level Impact: Where Are Cuts Hitting Hardest?
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+library(ggplot2)
+library(dplyr)
+library(readr)
+library(scales)
+library(tidyr)
+library(maps)
+
+# Change from 2023 peak to 2024 (post-cut drop) for each state
+state_change <- medicaid_wide %>%
+  filter(Location != "United States", Location != "Puerto Rico") %>%
+  mutate(change_pct_pt = `2024__Medicaid` - `2023__Medicaid`,
+         rate_2024     = `2024__Medicaid`) %>%
+  select(Location, change_pct_pt, rate_2024) %>%
+  mutate(region = tolower(Location))
+
+us_map <- map_data("state") %>%
+  left_join(state_change, by = "region")
+
+ggplot(us_map, aes(long, lat, group = group, fill = change_pct_pt)) +
+  geom_polygon(color = "white", linewidth = 0.3) +
+  coord_fixed(1.3) +
+  scale_fill_gradient2(
+    low      = "#E74C3C",
+    mid      = "#FDFEFE",
+    high     = "#2980B9",
+    midpoint = 0,
+    labels   = percent_format(accuracy = 0.1),
+    name     = "Change in\nMedicaid Rate\n(2023 → 2024)"
+  ) +
+  labs(
+    title    = "State-Level Change in Medicaid Participation Rate (2023–2024)",
+    subtitle = "Red = decline (coverage lost); Blue = increase (coverage gained)",
+    caption  = "Source: KFF State Health Facts"
+  ) +
+  theme_void(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40"),
+    legend.position = "right"
+  )
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+
+# Top 15 states with largest 2023→2024 decline
+state_drops <- medicaid_wide %>%
+  filter(Location != "United States", Location != "Puerto Rico") %>%
+  mutate(drop = `2024__Medicaid` - `2023__Medicaid`) %>%
+  arrange(drop) %>%
+  slice_head(n = 15) %>%
+  mutate(Location = fct_reorder(Location, drop))
+
+ggplot(state_drops, aes(x = Location, y = drop, fill = drop)) +
+  geom_col(width = 0.7) +
+  geom_text(aes(label = percent(drop, accuracy = 0.1)),
+            hjust = 1.1, color = "white", fontface = "bold", size = 3.2) +
+  coord_flip() +
+  scale_fill_gradient(low = "#C0392B", high = "#E8A09A", guide = "none") +
+  scale_y_continuous(labels = percent_format(accuracy = 0.1)) +
+  labs(
+    title    = "States with the Largest Medicaid Participation Decline (2023–2024)",
+    subtitle = "Top 15 states by percentage-point drop",
+    x = NULL, y = "Change in Participation Rate (ppt)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40"),
+    panel.grid.minor  = element_blank(),
+    panel.grid.major.y = element_blank()
+  )
+```
+
+The geographic and state-level bar charts together reveal that the impact of Medicaid cuts is far from uniform. States in the South and Mountain West — which tend to have higher rates of low-income residents and weaker safety nets outside of Medicaid — saw the sharpest single-year declines in participation. Colorado, Arizona, and several Southern states each lost more than 2 percentage points of enrolled residents between 2023 and 2024 alone, representing hundreds of thousands of individuals losing access to coverage in a single year.
+
+---
+
+Conclusion:
+
+Our analysis shows that while most people in the US have some form of health insurance, there is still a significant portion of the population that remains uninsured.From the correlation analysis, Medicaid stands out as the most important factor associated with lower uninsured rates. States with higher Medicaid coverage tend to have fewer uninsured individuals, suggesting that Medicaid plays a key role in providing access to healthcare.This also helps us think about the potential impact of Medicaid cuts. If Medicaid coverage is reduced, it is likely that the number of uninsured people will increase, especially in states that rely more heavily on it.
+To summarize, our findings highlight how important government programs like Medicaid are in maintaining health insurance coverage and reducing gaps in access to care.
+
+
 

@@ -88,7 +88,7 @@ Even though uninsured is not the largest category, it’s still a noticeable por
 
 
 
-```{r, echo=FALSE, message=FALSE, warning=FALSE, fig-height=7}
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
 raw_coverage <- read_csv("data/raw/Heathcare_Coverage_US.csv")
 
 df <- raw_coverage %>%
