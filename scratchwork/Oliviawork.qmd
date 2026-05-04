@@ -48,35 +48,44 @@ us_long <- us_totals %>%
     values_to = "People"
   )
 
-# Calculate label positions and alternating vjust
-us_long <- us_long %>%
+us_prop <- us_long %>%
   arrange(desc(Coverage)) %>%
   mutate(
+    People = People / sum(People),   # convert to proportions
     pos = cumsum(People) - People / 2,
-    vjust_val = ifelse(row_number() %% 2 == 0, 4.5, -3.5)  # alternates below/above
+    vjust_val = ifelse(row_number() %% 2 == 0, 4.5, -3.5),
   )
 
-# Plot
-ggplot(us_long, aes(x = "United States", y = People, fill = Coverage)) +
+ggplot(us_prop, aes(x = "", y = People, fill = Coverage)) +
   geom_bar(stat = "identity", width = 0.4) +
+  geom_segment(
+    aes(
+      x    = 1,
+      xend = 1 + vjust_val * -0.08,
+      y    = pos,
+      yend = pos
+    ),
+    color = "black",
+    linewidth = 0.4
+  ) +
   geom_text(
     aes(y = pos, label = Coverage, vjust = vjust_val),
     color = "black",
     fontface = "bold",
     size = 3
   ) +
+  scale_y_continuous(labels = scales::percent_format(accuracy = 1)) +
   coord_flip() +
   labs(
     title = "U.S. Health Insurance Coverage Totals",
     x = "",
-    y = "People"
+    y = "Coverage Type"
   ) +
   theme_minimal(base_size = 14) +
   theme(
     legend.position = "none",
     aspect.ratio = 0.15
   )
-
 ```
 
 ## Data Cleaning
@@ -194,16 +203,6 @@ p <- ggplot(cor_mat, aes(x = var1, y = var2, fill = corr, text = tooltip)) +
 ggplotly(p, tooltip = "text")
 ```
 
-# Final Viz: Effects of Medicaid Cuts
-
-viz of medicaid participation 
-projection of participation (pre covid years) this would be like a linear regression predicting participation
-
-effects of the cuts (how many people lost coverage)
-
-contrapositive plot: how many people would have coverage without the cuts versus how many people have lost coverage 
-
-Maybe a final map of which states are the most effected (income?)
 
 ## The Impact of Medicaid Cuts
 
