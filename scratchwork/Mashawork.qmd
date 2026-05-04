@@ -1,6 +1,5 @@
 ---
 title: "Mashawork"
-format: html
 ---
 
 ```{r}

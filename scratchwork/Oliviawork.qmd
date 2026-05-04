@@ -1,6 +1,5 @@
 ---
 title: "Olivia Work"
-format: html
 ---
 
 ```{r}
