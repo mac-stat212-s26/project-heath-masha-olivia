@@ -31,6 +31,7 @@ theme_set(
 
 
 ```{r}
+#VIZ 1
 #this chunk creates the inital bar chart
 
 num_insurance <- read.csv("../data/raw/num_insurance.csv")
@@ -107,10 +108,10 @@ states   <- df |> filter(location != "United States")
 ### Correlation Between Coverage Types
 
 ```{r}
-#| fig-height: 7
+#do not include in index
 # initial correlation matrix
 
-library(tidyverse)
+
 
 # correlation matrix
 corr_vals <- states %>%
@@ -154,6 +155,7 @@ ggplot(cor_mat, aes(var1, var2, fill = corr)) +
 
 
 ```{r}
+#VIZ 3
 #interactive correlation matrix
 
 cor_mat <- cor_mat %>%
@@ -212,7 +214,7 @@ Medicaid is the single largest source of health coverage for low-income American
 ### Medicaid Participation Over Time
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-
+#VIZ 4
 medicaid_wide <- read_csv("../data/raw/Medicaid participation.csv")
 
 # Pivot to long format
@@ -263,12 +265,7 @@ Medicaid enrollment grew steadily from 2008 through the ACA expansion in 2014, p
 ### Pre-COVID Projection: What Participation Would Look Like Without Cuts
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-library(ggplot2)
-library(dplyr)
-library(tidyr)
-library(readr)
-library(scales)
-
+#VIZ 5
 us_trend <- medicaid_long %>% filter(Location == "United States")
 
 # Fit linear regression on pre-COVID years (2013–2019) to project trend
@@ -333,12 +330,7 @@ A linear regression fitted to the 2013–2019 pre-pandemic period projects where
 ### How Many People Lost Coverage?
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-library(ggplot2)
-library(dplyr)
-library(readr)
-library(scales)
-library(tidyr)
-
+#VIZ 6
 # U.S. Census population estimates (millions) by year
 pop_millions <- tibble(
   year = c(2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015,
@@ -397,11 +389,7 @@ Combining participation rates with U.S. Census population estimates shows that t
 ### Coverage Lost vs. Coverage Retained
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-library(ggplot2)
-library(dplyr)
-library(readr)
-library(scales)
-library(tidyr)
+#do not include in index
 
 pop_millions <- tibble(
   year = c(2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015,
@@ -492,13 +480,7 @@ The side-by-side comparison makes the counterfactual concrete: the blue portion 
 ### State-Level Impact: Where Are Cuts Hitting Hardest?
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-library(ggplot2)
-library(dplyr)
-library(readr)
-library(scales)
-library(tidyr)
-library(maps)
-
+#VIZ 7
 # Change from 2023 peak to 2024 (post-cut drop) for each state
 state_change <- medicaid_wide %>%
   filter(Location != "United States", Location != "Puerto Rico") %>%
@@ -535,7 +517,7 @@ ggplot(us_map, aes(long, lat, group = group, fill = change_pct_pt)) +
 ```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
-
+#do not include in index
 # Top 15 states with largest 2023→2024 decline
 state_drops <- medicaid_wide %>%
   filter(Location != "United States", Location != "Puerto Rico") %>%

@@ -2,7 +2,6 @@
 title: "U.S. Health Insurance Coverage Report"
 ---
 
-Your report goes here.
 
 ```{r}
 library(ggplot2)

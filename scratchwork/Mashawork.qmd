@@ -34,6 +34,7 @@ map_data |> st_drop_geometry() |> filter(is.na(Uninsured)) |> pull(NAME)
 ```
 
 ```{r}
+#VIZ 2
 pal <- colorNumeric(palette = "YlOrRd", domain = map_data$Uninsured)
 
 popups <- pmap_chr(map_data |> st_drop_geometry(), function(NAME, Employer, `Non-Group`, 
@@ -77,6 +78,8 @@ leaflet(map_data) |>
     labFormat = labelFormat(suffix = "%", transform = function(x) round(x * 100, 1)),
     position = "bottomright"
   )
+
+
 ```
 
 
