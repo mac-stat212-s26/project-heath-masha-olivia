@@ -17,6 +17,8 @@ library(tibble)
 library(janitor)
 library(plotly)
 library(tidyverse)
+library(sf)
+library(leaflet)
 
 theme_set(
   theme_minimal(base_size = 12) +
@@ -101,7 +103,74 @@ We start with a general breakdown of insurance coverage across the U.S.
 From the chart, employer-based insurance clearly makes up the largest share by far. This isn’t too surprising, since many people get insurance through their jobs. Medicaid and Medicare also take up a significant portion, while non-group and military coverage are smaller.
 Even though uninsured is not the largest category, it’s still a noticeable portion of the population. That’s what we focus on more in the next steps.
 
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+states_sf <- read_sf("data/raw/cb_2018_us_state_20m/cb_2018_us_state_20m.shp")
 
+coverage <- read_csv("data/raw/HeathCare_Coverage_US.csv") |>
+  filter(Location != "United States") 
+
+uninsured_sex <- read_csv("data/raw/uninsured_sex_2024.csv", skip = 2) |>
+  filter(!is.na(Male),
+         !Location %in% c("Notes", "Sources", "Definitions", "Footnotes")) |>
+  select(Location, Male, Female, Total) |>
+  mutate(across(c(Male, Female, Total), as.numeric)) |>
+  filter(Location != "United States") 
+
+combined <- coverage |>
+  left_join(uninsured_sex, by = "Location", suffix = c("", "_sex"))
+
+map_data <- states_sf |>
+  left_join(combined, by = c("NAME" = "Location")) 
+
+map_data |> st_drop_geometry() |> filter(is.na(Uninsured)) |> pull(NAME)
+
+#VIZ 2
+pal <- colorNumeric(palette = "YlOrRd", domain = map_data$Uninsured)
+
+popups <- pmap_chr(map_data |> st_drop_geometry(), function(NAME, Employer, `Non-Group`, 
+                                                              Medicaid, Medicare, Military, 
+                                                              Uninsured, Male, Female, ...) {
+  paste0(
+    "<b style='font-size:14px'>", NAME, "</b><br>",
+    "<hr style='margin:3px 0'>",
+    "<b>Coverage breakdown:</b><br>",
+    "🏢 Employer: ", scales::percent(Employer, .1), "<br>",
+    "👤 Non-Group: ", scales::percent(`Non-Group`, .1), "<br>",
+    "🏥 Medicaid: ", scales::percent(Medicaid, .1), "<br>",
+    "👴 Medicare: ", scales::percent(Medicare, .1), "<br>",
+    "🪖 Military: ", scales::percent(Military, .1), "<br>",
+    "❌ Uninsured: <b style='color:#d73027'>", scales::percent(Uninsured, .1), "</b><br>",
+    "<hr style='margin:3px 0'>",
+    "<b>Uninsured by sex (ages 19–64):</b><br>",
+    "Male: ", scales::percent(Male, .1), " | Female: ", scales::percent(Female, .1))
+})
+
+leaflet(map_data) |>
+  addProviderTiles(providers$CartoDB.Positron) |>
+  addPolygons(
+    fillColor   = ~pal(Uninsured),
+    fillOpacity = 0.75,
+    color       = "white",
+    weight      = 1.5,
+    highlight   = highlightOptions(
+      weight       = 3,
+      color        = "#555",
+      fillOpacity  = 0.95,
+      bringToFront = TRUE
+    ),
+    popup = popups,
+    label = ~paste0(NAME, ": ", scales::percent(Uninsured, .1), " uninsured")
+  ) |>
+  addLegend(
+    pal      = pal,
+    values   = ~Uninsured,
+    title    = "Uninsured Rate",
+    labFormat = labelFormat(suffix = "%", transform = function(x) round(x * 100, 1)),
+    position = "bottomright"
+  )
+
+
+```
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 raw_coverage <- read_csv("data/raw/Heathcare_Coverage_US.csv")
