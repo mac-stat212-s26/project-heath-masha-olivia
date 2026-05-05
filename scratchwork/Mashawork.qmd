@@ -34,7 +34,7 @@ map_data |> st_drop_geometry() |> filter(is.na(Uninsured)) |> pull(NAME)
 ```
 
 ```{r}
-#VIZ 2
+# VIZ 2
 pal <- colorNumeric(palette = "YlOrRd", domain = map_data$Uninsured)
 
 popups <- pmap_chr(map_data |> st_drop_geometry(), function(NAME, Employer, `Non-Group`, 
@@ -57,6 +57,7 @@ popups <- pmap_chr(map_data |> st_drop_geometry(), function(NAME, Employer, `Non
 
 leaflet(map_data) |>
   addProviderTiles(providers$CartoDB.Positron) |>
+  setView(lng = -96, lat = 38, zoom = 4) |>
   addPolygons(
     fillColor   = ~pal(Uninsured),
     fillOpacity = 0.75,
@@ -78,8 +79,6 @@ leaflet(map_data) |>
     labFormat = labelFormat(suffix = "%", transform = function(x) round(x * 100, 1)),
     position = "bottomright"
   )
-
-
 ```
 
 
