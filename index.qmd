@@ -222,3 +222,13 @@ Conclusion:
 
 Our analysis shows that while most people in the US have some form of health insurance, there is still a significant portion of the population that remains uninsured.From the correlation analysis, Medicaid stands out as the most important factor associated with lower uninsured rates. States with higher Medicaid coverage tend to have fewer uninsured individuals, suggesting that Medicaid plays a key role in providing access to healthcare.This also helps us think about the potential impact of Medicaid cuts. If Medicaid coverage is reduced, it is likely that the number of uninsured people will increase, especially in states that rely more heavily on it.
 To summarize, our findings highlight how important government programs like Medicaid are in maintaining health insurance coverage and reducing gaps in access to care.
+
+
+Project Video: 
+
+{{< video Project.mp4 >}}
+
+Project Slides: 
+
+<iframe src="Slides.pdf" width="100%" height="600px"></iframe>
+
