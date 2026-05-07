@@ -1,5 +1,6 @@
 ---
 title: "U.S. Health Insurance Coverage Report"
+by: Jack F, Olivia, Masha
 ---
 
 
@@ -33,13 +34,29 @@ theme_set(
 
 
 
-Introduction:
+## Introduction:
 
 Healthcare coverage in the U.S. is something people talk about a lot, but it’s actually kind of hard to get a clear picture of how it’s distributed and what really affects it. We were especially interested in uninsured rates, since that directly reflects how many people are not covered at all.
 So our main goal here is to first understand what insurance coverage looks like overall in the U.S., and then look at what factors are related to people being uninsured. In particular, we want to see whether programs like Medicaid seem to play a role.
 
+## Understanding US Health Insurance Coverage：
+
+# What Each Coverage Type Means
+
+- Employer - provided through your job, premiums split between employer and employee
+
+- Non-Group - purchased individually on the marketplace (ACA exchanges)
+
+- Medicaid - federal/state program for low-income individuals and families
+
+- Medicare - federal program for adults 65+ and people with certain disabilities
+
+- Military - TRICARE coverage for active duty, veterans, and their families
+
+- Uninsured - no coverage at all, fully out-of-pocket
 
 
+## Overall Coverage in the US:
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 #this chunk creates the inital bar chart
 
@@ -96,13 +113,12 @@ ggplot(us_prop, aes(x = "", y = People, fill = Coverage)) +
     aspect.ratio = 0.15
   )
 ```
-
-Overall Coverage in the US:
-
 We start with a general breakdown of insurance coverage across the U.S.
 From the chart, employer-based insurance clearly makes up the largest share by far. This isn’t too surprising, since many people get insurance through their jobs. Medicaid and Medicare also take up a significant portion, while non-group and military coverage are smaller.
 Even though uninsured is not the largest category, it’s still a noticeable portion of the population. That’s what we focus on more in the next steps.
 
+
+## State-Level Uninsured Patterns:
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 states_sf <- read_sf("data/raw/cb_2018_us_state_20m/cb_2018_us_state_20m.shp")
 
@@ -172,6 +188,8 @@ leaflet(map_data) |>
 
 ```
 
+
+## How Coverage Types Relate to Each Other:
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 raw_coverage <- read_csv("data/raw/Heathcare_Coverage_US.csv")
 
@@ -230,6 +248,8 @@ There is also a strong negative relationship between employer-based insurance an
 Overall this indicates that Medicaid plays an important role in reducing the number of uninsured individuals.
 
 
+
+## Interactive Correlation Explorer:
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
 cor_mat <- cor_mat %>%
@@ -285,12 +305,275 @@ This allows us to hover over each pair of variables and see more detailed descri
 From this interactive view, the same pattern becomes even clearer: higher Medicaid coverage is consistently associated with lower uninsured rates across states. At the same time, employer-based coverage and Medicaid tend to move in opposite directions.
 Overall, the interactive chart helps confirm our earlier finding that Medicaid plays a key role in reducing the uninsured population.
 
+## The Impact of Medicaid Cuts
+
+Medicaid is the single largest source of health coverage for low-income Americans. Recent federal and state-level cuts have reversed years of enrollment growth, threatening to push millions back into the ranks of the uninsured. The following charts trace participation trends, model what enrollment *should* look like absent policy rollbacks, and map which states are bearing the heaviest burden.
+
+# Medicaid Participation Over Time
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#VIZ 4
+medicaid_wide <- read_csv("../data/raw/Medicaid participation.csv")
+
+# Pivot to long format
+medicaid_long <- medicaid_wide %>%
+  pivot_longer(-Location, names_to = "year_col", values_to = "rate") %>%
+  mutate(year = as.integer(sub("__Medicaid", "", year_col))) %>%
+  select(-year_col)
+
+# National trend
+us_trend <- medicaid_long %>% filter(Location == "United States")
+
+ggplot(us_trend, aes(x = year, y = rate)) +
+  geom_line(color = "#2980B9", linewidth = 1.2) +
+  geom_point(color = "#2980B9", size = 3) +
+  annotate("rect", xmin = 2020.5, xmax = 2023.5,
+           ymin = -Inf, ymax = Inf,
+           fill = "#F39C12", alpha = 0.12) +
+  annotate("text", x = 2022, y = 0.197,
+           label = "COVID-era\nenrollment surge",
+           color = "#B7770D", size = 3, fontface = "italic") +
+  annotate("segment", x = 2023.2, xend = 2024,
+           y = 0.213, yend = 0.207,
+           arrow = arrow(length = unit(0.2, "cm")),
+           color = "#E74C3C", linewidth = 0.8) +
+  annotate("text", x = 2022.5, y = 0.216,
+           label = "Cuts begin", color = "#E74C3C", size = 3.2) +
+  scale_y_continuous(labels = percent_format(accuracy = 1),
+                     limits = c(0.12, 0.23)) +
+  scale_x_continuous(breaks = c(2008, 2010, 2012, 2014, 2016,
+                                  2018, 2019, 2021, 2022, 2023, 2024)) +
+  labs(
+    title = "U.S. Medicaid Participation Rate, 2008–2024",
+    subtitle = "Share of population enrolled in Medicaid",
+    x = NULL, y = "Participation Rate"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+Medicaid enrollment grew steadily from 2008 through the ACA expansion in 2014, plateaued in the late 2010s, and then surged during the COVID-19 pandemic when continuous-enrollment protections prevented states from removing people from the rolls. Starting in 2024, cuts and renewed eligibility redeterminations reversed that trend — bringing the national rate down from a peak of 21.2% to 20.4% in a single year.
+
+# What Would Coverage Look Like Without Cuts?
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#VIZ 5
+us_trend <- medicaid_long %>% filter(Location == "United States")
+
+# Fit linear regression on pre-COVID years (2013–2019) to project trend
+pre_covid <- us_trend %>% filter(year >= 2013, year <= 2019)
+lm_model  <- lm(rate ~ year, data = pre_covid)
+
+projection_years <- data.frame(year = 2019:2024)
+projection_years$projected <- predict(lm_model, newdata = projection_years)
+
+# Observed vs projected
+obs_post <- us_trend %>% filter(year >= 2019)
+
+ggplot() +
+  # Observed historical line (all years)
+  geom_line(data = us_trend %>% filter(year <= 2019),
+            aes(x = year, y = rate, color = "Observed"),
+            linewidth = 1.2) +
+  geom_line(data = obs_post,
+            aes(x = year, y = rate, color = "Observed"),
+            linewidth = 1.2) +
+  # Projected trend (dashed)
+  geom_line(data = projection_years,
+            aes(x = year, y = projected, color = "Pre-COVID trend (projected)"),
+            linewidth = 1.1, linetype = "dashed") +
+  # Shade gap between projected and observed (2021-2024)
+  geom_ribbon(
+    data = inner_join(
+      obs_post %>% filter(year >= 2021),
+      projection_years %>% filter(year >= 2021),
+      by = "year"
+    ),
+    aes(x = year, ymin = rate, ymax = projected),
+    fill = "#E74C3C", alpha = 0.15
+  ) +
+  scale_color_manual(
+    values = c("Observed" = "#2980B9",
+               "Pre-COVID trend (projected)" = "#27AE60"),
+    name = NULL
+  ) +
+  scale_y_continuous(labels = percent_format(accuracy = 1)) +
+  scale_x_continuous(breaks = c(2008, 2010, 2012, 2014, 2016,
+                                  2018, 2019, 2021, 2022, 2023, 2024)) +
+  labs(
+    title = "Medicaid Participation: Observed vs. Pre-COVID Projected Trend",
+    subtitle = "Projection based on linear regression of 2013–2019 enrollment growth",
+    x = NULL, y = "Participation Rate",
+    caption = "Shaded area: gap between where participation would have been\nvs. where it actually landed after cuts began."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40"),
+    legend.position = "bottom",
+    panel.grid.minor = element_blank()
+  )
+```
+
+A linear regression fitted to the 2013–2019 pre-pandemic period projects where Medicaid participation would likely have trended absent COVID disruptions and subsequent cuts. By 2024, the model predicts a participation rate of roughly **20.9%** — about **0.5 percentage points** above the observed 20.4%. While this gap may sound modest, applied to a population of 335 million it represents millions of people who lost coverage or were not picked up by the program.
 
 
-Conclusion:
+## The Growing Coverage Gap
+```{r}
+#VIZ 6
 
-Our analysis shows that while most people in the US have some form of health insurance, there is still a significant portion of the population that remains uninsured.From the correlation analysis, Medicaid stands out as the most important factor associated with lower uninsured rates. States with higher Medicaid coverage tend to have fewer uninsured individuals, suggesting that Medicaid plays a key role in providing access to healthcare.This also helps us think about the potential impact of Medicaid cuts. If Medicaid coverage is reduced, it is likely that the number of uninsured people will increase, especially in states that rely more heavily on it.
-To summarize, our findings highlight how important government programs like Medicaid are in maintaining health insurance coverage and reducing gaps in access to care.
+pop_millions <- tibble(
+  year = c(2008, 2009, 2010, 2011, 2012, 2013, 2014, 2015,
+           2016, 2017, 2018, 2019, 2021, 2022, 2023, 2024),
+  pop  = c(304.1, 306.8, 309.3, 311.7, 314.0, 316.2, 318.6, 320.9,
+           323.1, 325.1, 326.7, 328.2, 332.0, 334.2, 335.9, 337.3)
+)
+
+us_trend <- medicaid_long %>%
+  filter(Location == "United States") %>%
+  left_join(pop_millions, by = "year") %>%
+  mutate(enrolled_millions = rate * pop)
+
+pre_covid <- us_trend %>% filter(year >= 2013, year <= 2019)
+lm_model  <- lm(rate ~ year, data = pre_covid)
+proj_df   <- tibble(year = 2019:2024)
+
+proj_df$proj_rate <- predict(lm_model, newdata = proj_df)
+
+proj_df <- proj_df %>%
+  left_join(pop_millions, by = "year") %>%
+  mutate(proj_enrolled = proj_rate * pop)
+
+impact <- us_trend %>%
+  filter(year >= 2021) %>%
+  left_join(proj_df %>% select(year, proj_enrolled), by = "year") %>%
+  mutate(gap_millions = proj_enrolled - enrolled_millions)
+
+ggplot(impact, aes(x = year, y = gap_millions)) +
+  geom_col(fill = "#E74C3C", alpha = 0.85, width = 0.6) +
+  geom_text(aes(label = paste0("+", round(gap_millions, 1), "M")),
+            vjust = -0.5, fontface = "bold", size = 3.8,
+            color = "#C0392B") +
+  scale_x_continuous(breaks = c(2021, 2022, 2023, 2024)) +
+  scale_y_continuous(labels = label_number(suffix = "M"),
+                     limits = c(0, max(impact$gap_millions) * 1.3)) +
+  labs(
+    title = "Estimated People Below Projected Medicaid Enrollment",
+    subtitle = "Difference between pre-COVID trend projection and actual enrollment",
+    x = NULL, y = "People (millions)",
+    caption = "Positive values indicate fewer enrollees than the pre-COVID trajectory predicted."
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40"),
+    panel.grid.minor = element_blank(),
+    panel.grid.major.x = element_blank()
+  )
+```
+Combining participation rates with U.S. Census population estimates shows that the gap between projected and actual Medicaid enrollment has grown each year since the cuts began. By 2024, roughly **1–2 million fewer people** are on Medicaid than the pre-pandemic trend would have predicted, with the shortfall widening from earlier years when enrollment was still protected by COVID-era policies.
+
+
+## Where Are Cuts Hitting Hardest?
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#VIZ 7
+# Change from 2023 peak to 2024 (post-cut drop) for each state
+state_change <- medicaid_wide %>%
+  filter(Location != "United States", Location != "Puerto Rico") %>%
+  mutate(change_pct_pt = `2024__Medicaid` - `2023__Medicaid`,
+         rate_2024     = `2024__Medicaid`) %>%
+  select(Location, change_pct_pt, rate_2024) %>%
+  mutate(region = tolower(Location))
+
+us_map <- map_data("state") %>%
+  left_join(state_change, by = "region")
+
+ggplot(us_map, aes(long, lat, group = group, fill = change_pct_pt)) +
+  geom_polygon(color = "white", linewidth = 0.3) +
+  coord_fixed(1.3) +
+  scale_fill_gradient2(
+    low      = "#E74C3C",
+    mid      = "#FDFEFE",
+    high     = "#2980B9",
+    midpoint = 0,
+    labels   = percent_format(accuracy = 0.1),
+    name     = "Change in\nMedicaid Rate\n(2023 → 2024)"
+  ) +
+  labs(
+    title    = "State-Level Change in Medicaid Participation Rate (2023–2024)",
+    subtitle = "Red = decline (coverage lost); Blue = increase (coverage gained)",
+    caption  = "Source: KFF State Health Facts"
+  ) +
+  theme_void(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40"),
+    legend.position = "right"
+  )
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+#do not include in index
+# Top 15 states with largest 2023→2024 decline
+state_drops <- medicaid_wide %>%
+  filter(Location != "United States", Location != "Puerto Rico") %>%
+  mutate(drop = `2024__Medicaid` - `2023__Medicaid`) %>%
+  arrange(drop) %>%
+  slice_head(n = 15) %>%
+  mutate(Location = fct_reorder(Location, drop))
+
+ggplot(state_drops, aes(x = Location, y = drop, fill = drop)) +
+  geom_col(width = 0.7) +
+  geom_text(aes(label = percent(drop, accuracy = 0.1)),
+            hjust = 1.1, color = "white", fontface = "bold", size = 3.2) +
+  coord_flip() +
+  scale_fill_gradient(low = "#C0392B", high = "#E8A09A", guide = "none") +
+  scale_y_continuous(labels = percent_format(accuracy = 0.1)) +
+  labs(
+    title    = "States with the Largest Medicaid Participation Decline (2023–2024)",
+    subtitle = "Top 15 states by percentage-point drop",
+    x = NULL, y = "Change in Participation Rate (ppt)"
+  ) +
+  theme_minimal(base_size = 12) +
+  theme(
+    plot.title    = element_text(face = "bold", size = 14),
+    plot.subtitle = element_text(color = "grey40"),
+    panel.grid.minor  = element_blank(),
+    panel.grid.major.y = element_blank()
+  )
+```
+
+The geographic and state-level bar charts together reveal that the impact of Medicaid cuts is far from uniform. States in the South and Mountain West — which tend to have higher rates of low-income residents and weaker safety nets outside of Medicaid — saw the sharpest single-year declines in participation. Colorado, Arizona, and several Southern states each lost more than 2 percentage points of enrolled residents between 2023 and 2024 alone, representing hundreds of thousands of individuals losing access to coverage in a single year.
+
+
+## Key Takeaways
+Employer coverage dominates, but gaps remain
+Employer-based insurance covers the largest share of Americans, yet tens of millions are still uninsured.
+Medicaid is the strongest buffer against being uninsured
+States with higher Medicaid rates consistently show lower uninsured rates.
+Cuts are reversing years of progress
+Since 2024, millions fewer people are enrolled than the pre-COVID trend projected, and the gap is widening.
+Geographic impact is uneven
+Several Mountain West and Southern states face disproportionate losses, threatening coverage for vulnerable residents.
+
+
+## Future Work
+# Socioeconomic Status
+We mostly looked at a general overview on how many people were affected, but was it disproportionate among people of different socioeconomic status?
+
+# Who Doesn't Get Employer Coverage?
+
+Most people get Health Insurance coverage through their employer, but who doesn't and why?
+
+# Coverage based on Sex
+
+This was another subset of data we had access to and did not explore. Is there disparities in healthcare coverage based on sex?
+
 
 
 Project Video: 
