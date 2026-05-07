@@ -190,6 +190,17 @@ leaflet(map_data) |>
 
 
 ## How Coverage Types Relate to Each Other:
+
+Next, we explore how different types of coverage are related to each other across states.
+One pattern that stands out is the relationship between Medicaid and uninsured rates. The correlation is negative, meaning that states with higher Medicaid coverage tend to have fewer uninsured people.
+To better understand the relationships between the different types of healthcare coverage, we also created a correlation matrix. This allows us to hover over each pair of variables and see more detailed descriptions of how they are related. It makes it easier to explore patterns without needing to read every number carefully.
+From this figure, we find that higher Medicaid coverage is consistently associated with lower uninsured rates across states. At the same time, employer-based coverage and Medicaid tend to move in opposite directions.
+There is also a strong negative relationship between employer-based insurance and Medicaid, suggesting that states rely more on one type of coverage than the other.
+Overall this indicates that Medicaid plays an important role in reducing the number of uninsured individuals.
+
+
+
+## Interactive Correlation Explorer:
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 raw_coverage <- read_csv("data/raw/Heathcare_Coverage_US.csv")
 
@@ -200,9 +211,12 @@ df <- raw_coverage %>%
   rename_with(~ c("location", "employer", "non_group", "medicaid",
                   "medicare", "military", "uninsured"), everything())
 
+# Separate national from state-level (territories)
 national <- df |> filter(location == "United States")
 states   <- df |> filter(location != "United States")
 
+
+# correlation matrix
 corr_vals <- states %>%
   select(-location) %>%
   cor()
@@ -221,36 +235,6 @@ cor_mat <- as.data.frame(corr_vals) %>%
     var1 = factor(var1, levels = vars),
     var2 = factor(var2, levels = rev(vars))   # flips y-axis nicely
   )
-
-ggplot(cor_mat, aes(var1, var2, fill = corr)) +
-  geom_tile(color = "white") +
-  geom_text(aes(label = round(corr, 2)), size = 3.5) +
-  scale_fill_gradient2(
-    low = "#E74C3C",
-    mid = "white",
-    high = "#2980B9",
-    midpoint = 0,
-    limits = c(-1, 1)
-  ) +
-  labs(
-    title = "Lower Triangle Correlation Matrix",
-    x = NULL, y = NULL
-  ) +
-  theme_minimal() +
-  theme(
-    axis.text.x = element_text(angle = 30, hjust = 1)
-  )
-
-```
-Next, we explore how different types of coverage are related to each other across states.
-One pattern that stands out is the relationship between Medicaid and uninsured rates. The correlation is negative, meaning that states with higher Medicaid coverage tend to have fewer uninsured people.
-There is also a strong negative relationship between employer-based insurance and Medicaid, suggesting that states rely more on one type of coverage than the other.
-Overall this indicates that Medicaid plays an important role in reducing the number of uninsured individuals.
-
-
-
-## Interactive Correlation Explorer:
-```{r, echo=FALSE, message=FALSE, warning=FALSE}
 
 cor_mat <- cor_mat %>%
   mutate(
@@ -300,10 +284,6 @@ ggplotly(p, tooltip = "text")
 
 ```
 
-To better understand these relationships, we also created an interactive version of the correlation matrix.
-This allows us to hover over each pair of variables and see more detailed descriptions of how they are related. It makes it easier to explore patterns without needing to read every number carefully.
-From this interactive view, the same pattern becomes even clearer: higher Medicaid coverage is consistently associated with lower uninsured rates across states. At the same time, employer-based coverage and Medicaid tend to move in opposite directions.
-Overall, the interactive chart helps confirm our earlier finding that Medicaid plays a key role in reducing the uninsured population.
 
 ## The Impact of Medicaid Cuts
 
@@ -313,7 +293,7 @@ Medicaid is the single largest source of health coverage for low-income American
 
 ```{r, echo=FALSE, message=FALSE, warning=FALSE}
 #VIZ 4
-medicaid_wide <- read_csv("../data/raw/Medicaid participation.csv")
+medicaid_wide <- read_csv("data/raw/Medicaid participation.csv")
 
 # Pivot to long format
 medicaid_long <- medicaid_wide %>%
@@ -563,15 +543,13 @@ Several Mountain West and Southern states face disproportionate losses, threaten
 
 
 ## Future Work
-# Socioeconomic Status
+Socioeconomic Status:
 We mostly looked at a general overview on how many people were affected, but was it disproportionate among people of different socioeconomic status?
 
-# Who Doesn't Get Employer Coverage?
-
+Who Doesn't Get Employer Coverage?
 Most people get Health Insurance coverage through their employer, but who doesn't and why?
 
-# Coverage based on Sex
-
+Coverage based on Sex:
 This was another subset of data we had access to and did not explore. Is there disparities in healthcare coverage based on sex?
 
 
