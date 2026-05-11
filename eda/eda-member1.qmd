@@ -1,5 +1,49 @@
 ---
-title: "Member 1 First Name & Last Name Initial"
+title: "Jack Fang"
 ---
 
-Your exploratory data analysis of the team datasets go here.
+y
+```{r}
+library(janitor)
+library(tidyverse)
+library(ggplot2)
+data <- read_csv("../data/raw/Heathcare_Coverage_US.csv")
+data <- clean_names(data)
+```
+```{r}
+summary(data)
+```
+
+```{r}
+ggplot(data, aes(x = uninsured)) +
+  geom_histogram(bins = 20, fill = "blue") +
+  theme_minimal()
+```
+```{r}
+data |> arrange(desc(uninsured)) |> select(location, uninsured) |> head(10)
+```
+```{r}
+ggplot(data, aes(x = medicaid, y = uninsured)) +
+  geom_point() +
+  theme_minimal()
+```
+```{r}
+ggplot(data, aes(x = employer, y = uninsured)) +
+  geom_point() +
+  theme_minimal()
+```
+```{r}
+data_long <- data |>
+  select(location, employer, medicaid, medicare, uninsured) |>
+  pivot_longer(-location)
+
+ggplot(data_long, aes(x = name, y = value)) +
+  geom_boxplot() +
+  theme_minimal()
+```
+Observation:
+
+There are some noticeable differences in uninsured rates across states. Most states are between about 5% and 9%, but a few states have much higher values, with Texas being a clear outlier.
+There seems to be a slight negative relationship between Medicaid coverage and uninsured rates, although the pattern is not very strong.
+The relationship between employer-based coverage and uninsured rates is more clear. States with higher employer coverage tend to have lower uninsured rates.
+Overall, both public programs like Medicaid and employer-based insurance appear to play a role in explaining differences in uninsured rates across states.

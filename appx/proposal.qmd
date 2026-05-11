@@ -2,4 +2,29 @@
 title: "Proposal"
 ---
 
-Your proposal go here.
+Title: "Investigating The Health Insurance Coverage of the US Population Across Poverty Level" 
+Olivia and Masha
+
+Description: This project will look at the health insurance status of the US population by state. We will explore the realtionships between status (below the poverty line, in the millitary, gender...etc) and heathcare coverage (medicaid, uninsured, insured by employer...etc).
+
+
+research questions: How strong is the correlation between poverty level and medicare coverage? 
+Are there groups more likely to be uninsured?
+Does race/ethnicity have an impact on healthcare coverage?
+
+the reasons/inspirations behind choosing the topic: We are both interested in healthcare disparities within the US and especially how people are affected witht the new cuts to social prgrams such as medicare/medicaid. 
+
+one potential data set that can be used to answer the research questions:
+There are multiple at this link: 
+https://www.kff.org/state-category/health-coverage-uninsured/ 
+and also on the US census website
+
+
+communication plan: we will communicate through email, and the expected response time will be 24 hours. Right now, meeting times will be 10:45 on wednesday, but subject to change. 
+
+
+roles: Masha-point of contact and style lead, Olivia-technical lead
+
+conflict resolution: we will have clear communication, if the deadline is missed, it will be made up, and if the team is split on something, the team lead responsible for the area of conflict will take the lead (ex: on a technical disagreement, Olivia is the lead and we will do her way.)
+
+a rough implementation plan: see github (this section to be edited once we have more specific tasks)
